@@ -1,5 +1,5 @@
 # ansible-jenkins-master
-Configure Jenkins Master from a scratch
+Configure Jenkins Master from a scratch with Project-based Matrix Authorization Strategy
 
 
 certification_repo - place to your Jenkins
