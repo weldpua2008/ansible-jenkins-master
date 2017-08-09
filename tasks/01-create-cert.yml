@@ -1,0 +1,32 @@
+---
+- name: Start Jenkins if need
+  service: name=jenkins state=started
+
+- name: Check if /usr/src/github exists
+  stat: path=/usr/src/github/
+  register: check_path_github
+
+- name: Create folder /usr/src/github
+  file: path=/usr/src/github state=directory
+  when: "check_path_github.stat.exists == false"
+
+
+- name: Get updated files from git repository
+  git: repo={{certification_repo}} dest=/usr/src/github/certificates force=yes
+
+- name: Delete folder /usr/src/github
+  file: path={{item}} state=absent
+  with_items: "{{jenkins_cert_files}}"
+
+- name: Create /var/lib/jenkins/keys.pkcs12
+  shell: openssl pkcs12 -inkey /usr/src/github/certificates/service.key -in /usr/src/github/certificates/service.crt -export -out /var/lib/jenkins/keys.pkcs12 -password pass:"{{JENKINS_HTTPS_KEYSTORE_PASSWORD}}"
+  
+- name: Create /var/lib/jenkins/jenkins.jks
+  shell: keytool -importkeystore -srckeystore /var/lib/jenkins/keys.pkcs12 -srcstoretype pkcs12 -destkeystore /var/lib/jenkins/jenkins.jks  -storepass "{{JENKINS_HTTPS_KEYSTORE_PASSWORD}}" -srcstorepass  "{{JENKINS_HTTPS_KEYSTORE_PASSWORD}}"
+
+- name: Chown
+  file: path={{item}} owner=jenkins group=jenkins 
+  with_items: "{{jenkins_cert_files}}"
+ 
+- name: Delete folder /usr/src/github/certificates
+  file: path=/usr/src/github/certificates  state=absent

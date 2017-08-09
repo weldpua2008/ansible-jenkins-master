@@ -1,0 +1,80 @@
+- name: Install deps
+  yum: name=python-lxml state=installed
+
+
+- name: Removing previous Main
+  xml:
+    path: /var/lib/jenkins/config.xml
+    pretty_print: True
+    xpath: /hudson/authorizationStrategy/*
+    ensure: absent
+  when: "item.cloudbees_space is defined and (item.cloudbees_space == 'None' or item.cloudbees_space == None)"
+  with_items:  "{% set merged=[] %}{% for item in jenkins_cloudbees_permissions %}{% for key in item.keys()|difference('cloudbees_space') %}{% set _ = merged.append({'cloudbees_space': item['cloudbees_space']}) %}{% endfor %}{% endfor %}{{merged | unique}}" 
+
+- name: Configuring current permissions for Main
+  xml:
+    path: /var/lib/jenkins/config.xml
+    pretty_print: True
+    xpath: /hudson/authorizationStrategy
+    add_children: 
+        - permission: "{{item.permission}}"
+  when: "item.cloudbees_space is defined and (item.cloudbees_space == 'None' or item.cloudbees_space == None)"
+  with_items:  "{% set merged=[] %}{% for item in jenkins_cloudbees_permissions %}{% for key in item.keys()|difference('cloudbees_space') %}{% for k in item[key] %}{% set _z = key+':'+ k %}{% set _ = merged.append({'cloudbees_space': item['cloudbees_space'], 'permission': _z}) %}{% endfor %}{% endfor %}{% endfor %}{{merged}}" 
+
+
+  
+- name: Removing previous permissions
+  xml:
+    path: /var/lib/jenkins/{{item.cloudbees_space|regex_replace('/', '/jobs/')}}/config.xml
+    pretty_print: True
+    xpath: /com.cloudbees.hudson.plugins.folder.Folder/properties/com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty/permission/*
+    ensure: absent      
+  when: "item.cloudbees_space is defined and item.cloudbees_space != 'None' and item.cloudbees_space != None"
+  with_items:  "{% set merged=[] %}{% for item in jenkins_cloudbees_permissions %}{% for key in item.keys()|difference('cloudbees_space') %}{% set _ = merged.append({'cloudbees_space': item['cloudbees_space']}) %}{% endfor %}{% endfor %}{{merged | unique}}" 
+
+- name: Configuring current permissions
+  xml:
+    path: /var/lib/jenkins/{{item.cloudbees_space|regex_replace('/', '/jobs/')}}/config.xml
+    pretty_print: True
+    xpath: /com.cloudbees.hudson.plugins.folder.Folder/properties/com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty
+    add_children: 
+        - permission: "{{item.permission}}"
+  when: "item.cloudbees_space is defined and item.cloudbees_space != 'None' and item.cloudbees_space != None"
+  with_items:  "{% set merged=[] %}{% for item in jenkins_cloudbees_permissions %}{% for key in item.keys()|difference('cloudbees_space') %}{% for k in item[key] %}{% set _z = key+':'+ k %}{% set _ = merged.append({'cloudbees_space': item['cloudbees_space'], 'permission': _z}) %}{% endfor %}{% endfor %}{% endfor %}{{merged}}" 
+
+
+
+- name: Restart Jenkins if required
+  service:
+    name: jenkins
+    state: restarted    
+
+- block:
+    - name: Wait for Jenkins to start up
+      uri:
+        url: "{{my_jenkins_url}}"
+        status_code: 200
+        timeout: 5
+        user: "{{JENKINS_USERNAME}}"
+        password: "{{JENKINS_USERNAME_PASSWORD}}"
+        force_basic_auth: yes
+      register: jenkins_service_status  
+      retries: 60
+      delay: 5
+      until: >
+         'status' in jenkins_service_status and
+         (jenkins_service_status['status'] == 200 or jenkins_service_status['status'] == 403)    
+  rescue:
+    - name: Wait for Jenkins to start up
+      uri:
+        url: "{{my_jenkins_url}}"
+        status_code: 200
+        timeout: 5
+      register: jenkins_service_status      
+      # Keep trying for 5 mins in 5 sec intervals
+      retries: 60
+      delay: 5
+      until: >
+         'status' in jenkins_service_status and
+         jenkins_service_status['status'] == 200
+

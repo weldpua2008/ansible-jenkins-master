@@ -1,0 +1,35 @@
+---
+- name: Install Deps
+  yum: name={{item}} state=installed
+  with_items:
+    - "epel-release"  
+    - "python-pip"  
+    - "python-virtualenv"
+    - "python-lxml"
+
+
+- name: Install jenkins_job Deps
+  pip:
+    name: python-jenkins
+
+
+# Create a jenkins job definition using basic authentication
+- name: Defining Jobs
+  jenkins_job:
+    config: "{{ lookup('template', 'templates/{{item.template}}') }}"
+    name: "{{item.name}}"
+    password: "{{JENKINS_USERNAME_PASSWORD}}"
+    url: "{{my_jenkins_url}}"
+    user: "{{JENKINS_USERNAME}}"  
+  when: "item.template is defined and item.name is defined"
+  with_items: "{{my_jenkins_jobs}}"
+
+- name: Defining Jobs
+  jenkins_job:
+    config: "{{ lookup('file', 'templates/{{item.file}}') }}"
+    name: "{{item.name}}"
+    password: "{{JENKINS_USERNAME_PASSWORD}}"
+    url: "{{my_jenkins_url}}"
+    user: "{{JENKINS_USERNAME}}"  
+  when: "item.file is defined and item.name is defined"
+  with_items: "{{my_jenkins_jobs}}"

@@ -1,0 +1,31 @@
+---
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_os_family }}.yml"
+  tags: ['01-create-cert.yml','02-port-settings.yml','03-jenkins-master-plugin.yml']
+  
+- name: set JENKINS_CERT_PASS
+  set_fact:
+    JENKINS_HTTPS_KEYSTORE_PASSWORD: "{{JENKINS_CERT_PASS}}"
+  tags: ['01-create-cert.yml','02-port-settings.yml','03-jenkins-master-plugin.yml']
+  
+- name: Configure cetificate
+  include: 01-create-cert.yml
+  tags: ['01-create-cert.yml']
+
+- name: Configure port
+  include: 02-port-settings.yml
+  tags: ['02-port-settings.yml']
+
+- name: Adding plugins to Jenkins Master
+  include: 03-jenkins-master-plugin.yml
+  tags: ['03-jenkins-master-plugin.yml']
+
+- name: Adding perm
+  include: 04-add-users-permissions.yml
+  tags: ['04-add-users-permissions.yml']
+
+- name: Adding Jobs
+  include: 05-define-jobs.yml
+  tags: ['05-define-jobs.yml']
+
+

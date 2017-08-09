@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  author: Valeriy Soloviov
+  description: Jenkins Master configuration role
+  license: Apache 2.0
+  min_ansible_version: 1.9
+  platforms:
+  - name: EL
+    versions:
+    - 7
+  - name: Fedora
+    versions:
+    - 19
+  categories:
+    - system
+    - development
+    - packaging
+  
+dependencies:
+  - { role: weldpua2008.java }

@@ -1,0 +1,29 @@
+---
+- name: Set the Jenkins JENKINS_PORT
+  lineinfile:
+    dest: "{{ jenkins_init_file }}"
+    regexp: '^JENKINS_PORT=.*'
+    line: 'JENKINS_PORT={{ JENKINS_PORT| default("8080") }}'
+  notify: restart jenkins  
+  
+- name: Set the Jenkins JENKINS_HTTPS_PORT
+  lineinfile:
+    dest: "{{ jenkins_init_file }}"
+    regexp: '^JENKINS_HTTPS_PORT=.*'
+    line: 'JENKINS_HTTPS_PORT={{ JENKINS_HTTPSPORT }}'  
+  notify: restart jenkins  
+
+- name: Set the Jenkins JENKINS_HTTPS_KEYSTORE
+  lineinfile:
+    dest: "{{ jenkins_init_file }}"
+    regexp: '^JENKINS_HTTPS_KEYSTORE=.*'
+    line: 'JENKINS_HTTPS_KEYSTORE={{ JENKINS_HTTPS_KEYSTORE }}'
+  notify: restart jenkins  
+
+
+- name: Set the Jenkins JENKINS_HTTPS_KEYSTORE_PASSWORD
+  lineinfile:
+    dest: "{{ jenkins_init_file }}"
+    regexp: '^JENKINS_HTTPS_KEYSTORE_PASSWORD=.*'
+    line: 'JENKINS_HTTPS_KEYSTORE_PASSWORD="{{ JENKINS_HTTPS_KEYSTORE_PASSWORD }}"'
+  notify: restart jenkins  
