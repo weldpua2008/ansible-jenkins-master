@@ -7,11 +7,9 @@
     - "python-virtualenv"
     - "python-lxml"
 
-
 - name: Install jenkins_job Deps
   pip:
     name: python-jenkins
-
 
 # Create a jenkins job definition using basic authentication
 - name: Defining Jobs
